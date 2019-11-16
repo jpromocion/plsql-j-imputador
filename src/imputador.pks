@@ -59,6 +59,10 @@ Y certificado en servidor:
 
     docker exec -it oracledb bash -c "su - oracle; /u01/app/oracle/product/12.2.0/dbhome_1/jlib/oraclepki.jar wallet create -wallet /u01/app/oracle/admin/ORCL/wallet -pwd WalletPasswd123 -auto_login"
 
+  -VAgrant18c:
+    mkdir -p /opt/oracle/admin/ORCLCDB/wallet
+    Copiamos en /opt/oracle/admin/ORCLCDB/wallet los que creamos
+
 
 docker exec -it oracledb bash -c "ls -l /u01/app/oracle/product/12.2.0/dbhome_1/jlib/"
 

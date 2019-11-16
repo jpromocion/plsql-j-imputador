@@ -13,7 +13,7 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
 
     req := utl_http.begin_request(url, 'POST',' HTTP/1.1');
 
-    UTL_HTTP.set_wallet('file:C:\oraclexe\app\oracle\admin\XE\wallet', 'WalletPasswd123');
+    UTL_HTTP.set_wallet('file:/opt/oracle/admin/ORCLCDB/wallet/', 'WalletPasswd123');
 
     utl_http.set_header(req, 'user-agent', 'mozilla/4.0');
     utl_http.set_header(req, 'content-type', 'application/json');
