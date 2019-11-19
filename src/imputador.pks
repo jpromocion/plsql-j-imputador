@@ -9,7 +9,7 @@ CREATE OR REPLACE PACKAGE IMPUTADOR AS
 @TODO: Prerequisitos:
 GRANT EXECUTE ON SYS.UTL_HTTP TO HR;
 
-https://oracle-base.com/articles/misc/utl_http-and-ssl_
+https://oracle-base.com/articles/misc/utl_http-and-ssl
 
 Y ACL:
 
@@ -50,27 +50,16 @@ END;
 
 
 Y certificado en servidor:
-  -Nueva carpeta C:\oraclexe\app\oracle\admin\XE\wallet (/u01/app/oracle/admin/DB11G/wallet)
-    docker exec -it oracledb bash -c "mkdir -p /u01/app/oracle/admin/ORCL/wallet"
-
-  -Creamos wallet:
-    orapki wallet create -wallet C:\oraclexe\app\oracle\admin\XE\wallet -pwd WalletPasswd123 -auto_login
-    NOTA: lo lleva la instalacion de jdeveloper 11 (C:\Oracle\Middleware\oracle_common\bin)
-
-    docker exec -it oracledb bash -c "su - oracle; /u01/app/oracle/product/12.2.0/dbhome_1/jlib/oraclepki.jar wallet create -wallet /u01/app/oracle/admin/ORCL/wallet -pwd WalletPasswd123 -auto_login"
-
-  -VAgrant18c:
+  -Docker 18c
     mkdir -p /opt/oracle/admin/ORCLCDB/wallet
-    Copiamos en /opt/oracle/admin/ORCLCDB/wallet los que creamos
+    orapki wallet create -wallet /opt/oracle/admin/ORCLCDB/wallet -pwd WalletPasswd123 -auto_login
 
+  -En teoria basta con el de la entidad padre certificadora de toda la ruta:
+    orapki wallet add -wallet /opt/oracle/admin/ORCLCDB/wallet -cert /var/jortri/tnsnames/USERTrustRSACertificationAuthority.crt -trusted_cert -pwd WalletPasswd123
 
-docker exec -it oracledb bash -c "ls -l /u01/app/oracle/product/12.2.0/dbhome_1/jlib/"
+  -Si queremos ver lo cargado:
+    orapki wallet display -wallet  /opt/oracle/admin/ORCLCDB/wallet
 
-  -Bajar certificado de api.fuifi.com ->
-  -MEter certificado en wallet:
-    C:\Oracle\Middleware\oracle_common\bin\orapki wallet add -wallet C:\oraclexe\app\oracle\admin\XE\wallet -trusted_cert -cert "C:\Users\jgalvez\Desktop\api.fuifi.cer" -pwd WalletPasswd123
-
-    docker exec -it oracledb bash -c "orapki wallet add -wallet /u01/app/oracle/admin/ORCL/wallet -trusted_cert -cert "C:\Users\jgalvez\Desktop\api.fuifi.cer" -pwd WalletPasswd123"
 
  */
 
@@ -78,11 +67,10 @@ docker exec -it oracledb bash -c "ls -l /u01/app/oracle/product/12.2.0/dbhome_1/
 
   /**
    * Return number of days between two dates
-   * @param minDate Minimun date
-   * @param maxDate Maximun date
+   * @param lastImputations
    * @return
    */
-  PROCEDURE getImputations(minDate DATE, maxDate DATE);
+  PROCEDURE getImputations(lastImputations INTEGER := 15);
 
 
 END IMPUTADOR;
