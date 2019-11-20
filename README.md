@@ -58,7 +58,7 @@ END;
 /
 ```
 
-Para crear los componentes necesariaos en nuestro esquema creado (en el ejemplo "HR") y lanzamos el script de inicializacion y la compilacion del paquete "imputador":
+Para crear los componentes necesarios en nuestro esquema creado (en el ejemplo "HR"), lanzamos el script de inicializacion y la compilacion del paquete "imputador":
 ```
 @init/database.sql
 @src/imputador.pks
@@ -75,11 +75,10 @@ Dado que la API REST de fuifi va por https, es necesario configurar un wallet de
 mkdir -p /opt/oracle/admin/ORCLCDB/wallet
 orapki wallet create -wallet /opt/oracle/admin/ORCLCDB/wallet -pwd WalletPasswd123 -auto_login
 orapki wallet add -wallet /opt/oracle/admin/ORCLCDB/wallet -cert /tmp/USERTrustRSACertificationAuthority.crt -trusted_cert -pwd WalletPasswd123
-#NOTA:
 ```
 NOTA: mas información al respecto en https://oracle-base.com/articles/misc/utl_http-and-ssl y https://apex.oracle.com/pls/apex/germancommunities/apexcommunity/tipp/6121/index-en.html.
 
-Si se utiliza una ruta de contenedor de certificado y un password distinto, el mismo debe ser actualizado en la tabla creada CONFIGURATION:
+Si se utiliza una ruta de contenedor de certificado y un password distinto, el mismo debe ser actualizado en la tabla creada en los scripts de inicialización de nuestro esquema "CONFIGURATION":
   * El parámetro "WALLE" contiene la ruta de localización del contenedor de certificados. Defecto es "/opt/oracle/admin/ORCLCDB/wallet".
   * El parámetro "WALPS" contiene la contraseña de acceso al contenedor de certificados. Defecto es "WalletPasswd123".
 
@@ -197,7 +196,6 @@ Ejemplo de rechazo de una imputación (por ejemplo, si el día ya está imputado):
 ## Unit test
 Testeado con utPlsql version 3 (http://utplsql.org/utPLSQL/).
 Ejecutar:
-!!!CUIDADO!!!: El entorno es producción, la prueba intentará imputar en el día actual.
 ``` sql
 set serveroutput on
 begin
@@ -206,3 +204,5 @@ end;
 /
 ```
 NOTA: reemplazar "hr" por el esquema donde se haya creado
+
+!!!CUIDADO!!!: El entorno es producción, la prueba intentará imputar en el día actual.
