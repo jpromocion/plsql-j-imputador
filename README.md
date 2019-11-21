@@ -121,23 +121,26 @@ Para realizar una imputación existen dos mecanismos
   * Especificar un conjunto de dias con sus imputaciones concretas:
 
   ``` sql
-  --Ultimos 30 dias
+  --imputar 2 dias
   set serveroutput on
   declare
     tDiasImputar Imputador.T_DAYIMPUTATIONS  := Imputador.T_DAYIMPUTATIONS();
+    dia VARCHAR2(10);
   begin
 
     tDiasImputar.EXTEND(2);
     --dia 1
-    tDiasImputar(1).DATEIM := TO_DATE('20/11/2019','DD/MM/YYYY');
-    tDiasImputar(1).STARTTIME := TO_DATE('20/11/2019 08:00','DD/MM/YYYY HH24:MI');
-    tDiasImputar(1).ENDTIME := TO_DATE('20/11/2019 21:00','DD/MM/YYYY HH24:MI');
-    tDiasImputar(1).TIMEEFECTIVE := TO_DATE('20/11/2019 12:00','DD/MM/YYYY HH24:MI');
+    dia := '20/11/2019';
+    tDiasImputar(1).DATEIM := TO_DATE(dia,'DD/MM/YYYY');
+    tDiasImputar(1).STARTTIME := TO_DATE(dia || ' 08:00','DD/MM/YYYY HH24:MI');
+    tDiasImputar(1).ENDTIME := TO_DATE(dia || ' 21:00','DD/MM/YYYY HH24:MI');
+    tDiasImputar(1).TIMEEFECTIVE := TO_DATE(dia || ' 12:00','DD/MM/YYYY HH24:MI');
     --dia 2
-    tDiasImputar(2).DATEIM := TO_DATE('21/11/2019','DD/MM/YYYY');
-    tDiasImputar(2).STARTTIME := TO_DATE('21/11/2019 08:00','DD/MM/YYYY HH24:MI');
-    tDiasImputar(2).ENDTIME := TO_DATE('21/11/2019 15:00','DD/MM/YYYY HH24:MI');
-    tDiasImputar(2).TIMEEFECTIVE := TO_DATE('21/11/2019 07:00','DD/MM/YYYY HH24:MI');
+    dia := '21/11/2019';
+    tDiasImputar(2).DATEIM := TO_DATE(dia,'DD/MM/YYYY');
+    tDiasImputar(2).STARTTIME := TO_DATE(dia || ' 08:00','DD/MM/YYYY HH24:MI');
+    tDiasImputar(2).ENDTIME := TO_DATE(dia || ' 15:00','DD/MM/YYYY HH24:MI');
+    tDiasImputar(2).TIMEEFECTIVE := TO_DATE(dia || ' 07:00','DD/MM/YYYY HH24:MI');
     --dias N.....
 
     imputador.setImputationsWrapper(tDayImputations => tDiasImputar);
@@ -148,7 +151,6 @@ Para realizar una imputación existen dos mecanismos
   * Especificar un rango de fechas, y un conjunto de días modelo para los 5 dias laborales, imputandose en todo el periodo indicado, haciendo uso de la imputación del día modelo de semana:  
 
   ``` sql
-  --Ultimos 30 dias
   set serveroutput on
   declare
     tDiasModelo Imputador.T_MODELDAYS  := Imputador.T_MODELDAYS();
@@ -192,6 +194,34 @@ Ejemplo de rechazo de una imputación (por ejemplo, si el día ya está imputado):
 ```
 [ERROR]: Received non-OK response: 400 Bad Request
 ```
+
+Adicionalmente se añaden los parametros de invocación del imputador "randomTime" y "randomEfective" (por defecto no activados):
+  * "randomTime": Sobre la hora de entrada y salida, añade/decrementa aleatoriamente un valor de entre 1 a 5 minutos (aportar realismo). NOTA: En caso de provocarse un incremento del tiempo real sobre el efectivo rellenado, se corrige automáticamente el efectivo para evitar descuadrar.
+  * "randomEfective": Adicionalmente, sobre el tiempo efectivo a imputar, decrementa un valor aleatorio de entre 1-15 minutos (aportar realismo).
+Ejemplo:
+``` sql
+set serveroutput on
+declare
+  tDiasImputar Imputador.T_DAYIMPUTATIONS  := Imputador.T_DAYIMPUTATIONS();
+  DIA CONSTANT VARCHAR2(10) := '21/11/2019';
+begin
+
+  tDiasImputar.EXTEND(1);
+  --dia 2
+  tDiasImputar(1).DATEIM := TO_DATE(DIA,'DD/MM/YYYY');
+  tDiasImputar(1).STARTTIME := TO_DATE(DIA || ' 08:00','DD/MM/YYYY HH24:MI');
+  tDiasImputar(1).ENDTIME := TO_DATE(DIA || ' 15:00','DD/MM/YYYY HH24:MI');
+  tDiasImputar(1).TIMEEFECTIVE := TO_DATE(DIA || ' 07:00','DD/MM/YYYY HH24:MI');
+  --dias N.....
+
+  imputador.setImputationsWrapper(tDayImputations => tDiasImputar, randomTime => TRUE, randomEfective => TRUE);
+end;
+/
+```
+
+
+NOTA: Úsese bajo responsabilidad personal.
+
 
 ## Unit test
 Testeado con utPlsql version 3 (http://utplsql.org/utPLSQL/).

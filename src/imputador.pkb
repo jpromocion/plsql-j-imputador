@@ -21,6 +21,8 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
   TYPE T_HTTP_HEADER IS TABLE OF HTTP_HEADER;
 
 
+  --PRIVATE
+  ---------------------------------------------------------------------------------------------
 
   /**
    * Recover configuration value
@@ -146,14 +148,72 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
 
   END getTokenAuthorization;
 
+  /**
+   * Change time parameter add/minus random minutes value: 1-5 minutes
+   * @param time Datetime in
+   * @return Changed datetime
+   */
+  FUNCTION setRandomTime(time DATE)
+  RETURN DATE IS
+    numRandomTime INTEGER;
+    newTime DATE;
+  BEGIN --setRandomTime
+    numRandomTime := (1+ABS(MOD(dbms_random.random,5)));
+    IF (1+ABS(MOD(dbms_random.random,2))) = 1 THEN
+      newTime := time + (1/1440*numRandomTime);
+    ELSE
+      newTime := time - (1/1440*numRandomTime);
+    END IF;
+    RETURN newTime;
+  END setRandomTime;
+
+  /**
+   * Change time parameter minus random minutes value: 1-15 minutes
+   * @param time Datetime in
+   * @return Changed datetime
+   */
+  FUNCTION setRandomTimeEfec(time DATE)
+  RETURN DATE IS
+    numRandomTime INTEGER;
+    newTime DATE;
+  BEGIN --setRandomTimeEfec
+    numRandomTime := (1+ABS(MOD(dbms_random.random,15)));
+    newTime := time - (1/1440*numRandomTime);
+    RETURN newTime;
+  END setRandomTimeEfec;
+
+  /**
+   * Check if time efec is correct after to apply random start/end time
+   * @param tDayimputationReview info imputation
+   * @return Info imputation with efective time check
+   */
+  PROCEDURE checkTimeEfecRamdonStart(tDayimputationReview IN OUT NOCOPY T_DAYIMPUTATION) IS
+    minutesTot INTEGER;
+    hours INTEGER;
+    minutes INTEGER;
+    timeEfecReal DATE;
+  BEGIN --checkTimeEfecRamdonStart
+    minutesTot := (tDayimputationReview.ENDTIME - tDayimputationReview.STARTTIME)  * 24 * 60;
+    hours := TRUNC(minutesTot / 60);
+    minutes := ROUND(minutesTot - (TRUNC(minutesTot / 60) * 60));
+    timeEfecReal := TO_DATE(TO_CHAR(tDayimputationReview.TIMEEFECTIVE,'DD/MM/YYYY') || ' ' || hours ||':'||minutes, 'DD/MM/YYYY HH24:MI');
+    IF tDayimputationReview.TIMEEFECTIVE > timeEfecReal THEN
+      tDayimputationReview.TIMEEFECTIVE := timeEfecReal;
+    END IF;
+  END checkTimeEfecRamdonStart;
+
 
   /**
    * Set one day in imputations
    * @param tDayimputation Day's data
    * @param tStatusImpusResult Fill result
+   * @param randomTime Add random in start time, end time -> 5 minutes before or after
+   * @param randomEfective Add random in efective time -> 5 minutes before
    */
   PROCEDURE setDayImputation(tDayimputation T_DAYIMPUTATION,
-                             tStatusImpusResult IN OUT NOCOPY T_STATUSIMPUS)  IS
+                             tStatusImpusResult IN OUT NOCOPY T_STATUSIMPUS,
+                             randomTime BOOLEAN := FALSE,
+                             randomEfective BOOLEAN := FALSE)  IS
     tToken T_TOKEN;
     urlBase_ CONFIGURATION.VALUE%TYPE;
     urlImputa_ CONFIGURATION.VALUE%TYPE;
@@ -164,6 +224,8 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
 
     tStatusimpu T_STATUSIMPU;
     indexNewResult INTEGER;
+
+    tDayimputationReview T_DAYIMPUTATION;
   BEGIN  --setDayImputation
 
     tToken := getTokenAuthorization();
@@ -180,22 +242,48 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
     thttpHeader(3).HEADER := 'Authorization';
     thttpHeader(3).VALUE := tToken.TOKENTYPE || ' ' || tToken.TOKEN;
 
+
+
+    --Check random review
+    tDayimputationReview := tDayimputation;
+    IF randomTime THEN
+      --random start time
+      tDayimputationReview.STARTTIME := setRandomTime(tDayimputation.STARTTIME);
+
+      --random end time
+      tDayimputationReview.ENDTIME := setRandomTime(tDayimputation.ENDTIME);
+
+      --apply random start/end time in timeefective -> no more time
+      checkTimeEfecRamdonStart(tDayimputationReview);
+
+      --Check random minus time effective
+      IF randomEfective THEN
+        tDayimputationReview.TIMEEFECTIVE := setRandomTimeEfec(tDayimputationReview.TIMEEFECTIVE);
+      END IF;
+    END IF;
+
+    -- dbms_output.put_line('Día ' || TO_CHAR(tDayimputationReview.DATEIM,'DD/MM/YYYY') || ' -> ' ||
+    --           'Inicio' || ': ' || TO_CHAR(tDayimputationReview.STARTTIME,'HH24:MI') || ' - ' ||
+    --           'Fin' || ': '|| TO_CHAR(tDayimputationReview.ENDTIME,'HH24:MI') || ' - ' ||
+    --           'Efect time' || ': '|| TO_CHAR(tDayimputationReview.TIMEEFECTIVE,'HH24:MI'));
+
+
     htmlResponse := attackUrl(urlBase_ || urlImputa_, thttpHeader,
-                            '{"date":"'||TO_CHAR(tDayimputation.DATEIM,'YYYY-MM-DD')||
-                            '","effective_time":"'||TO_CHAR(tDayimputation.TIMEEFECTIVE,'HH24:MI')||
-                            '","time_from":"'||TO_CHAR(tDayimputation.STARTTIME,'HH24:MI')||
-                            '","time_to":"'||TO_CHAR(tDayimputation.ENDTIME,'HH24:MI')||'"}');
+                            '{"date":"'||TO_CHAR(tDayimputationReview.DATEIM,'YYYY-MM-DD')||
+                            '","effective_time":"'||TO_CHAR(tDayimputationReview.TIMEEFECTIVE,'HH24:MI')||
+                            '","time_from":"'||TO_CHAR(tDayimputationReview.STARTTIME,'HH24:MI')||
+                            '","time_to":"'||TO_CHAR(tDayimputationReview.ENDTIME,'HH24:MI')||'"}');
     IF NVL(dbms_lob.getlength(htmlResponse), 0) > 0 THEN
 
       jsonResponse := JSON_OBJECT_T(htmlResponse);
       tStatusimpu.STATUS := jsonResponse.get_string('status');
       tStatusimpu.STATUSCODE := jsonResponse.get_string('status_code');
       tStatusimpu.MESSAGE := jsonResponse.get_string('message');
-      tStatusimpu.DATEIM := tDayimputation.DATEIM;
+      tStatusimpu.DATEIM := tDayimputationReview.DATEIM;
 
       indexNewResult := NVL(tStatusImpusResult.LAST, 0) + 1;
       tStatusImpusResult(indexNewResult) := tStatusimpu;
-      -- dbms_output.put_line('Día ' || TO_CHAR(tDayimputation.DATEIM,'DD/MM/YYYY') || ' -> ' ||
+      -- dbms_output.put_line('Día ' || TO_CHAR(tDayimputationReview.DATEIM,'DD/MM/YYYY') || ' -> ' ||
       --           tStatusimpu.STATUS || ' - ' ||
       --           tStatusimpu.STATUSCODE || ' - '||
       --           tStatusimpu.MESSAGE);
@@ -206,6 +294,10 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
 -- COMMIT;
 
   END setDayImputation;
+
+
+  --PUBLIC
+  ---------------------------------------------------------------------------------------------
 
 
   /**
@@ -325,13 +417,17 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
    * @param startDate Optional, if you imputation is for model day. Start date
    * @param endDate Optional, if you imputation is for model day. End date
    * @param tModelDays Optional, if you imputation is for model day. 5 model days -> mondays-fridays
+   * @param randomTime Add random in start time, end time -> 5 minutes before or after
+   * @param randomEfective Add random in efective time -> 5 minutes before
    * @return Type all set imputations done
    */
   FUNCTION setImputations(
                       tDayImputations IMPUTADOR.T_DAYIMPUTATIONS := NULL,
                       startDate DATE := NULL,
                       endDate DATE := NULL,
-                      tModelDays IMPUTADOR.T_MODELDAYS := NULL)
+                      tModelDays IMPUTADOR.T_MODELDAYS := NULL,
+                      randomTime BOOLEAN := FALSE,
+                      randomEfective BOOLEAN := FALSE)
   RETURN T_STATUSIMPUS IS
     dateActually DATE;
     indexDayModel INTEGER;
@@ -351,7 +447,8 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
           IF tDayImputations.EXISTS(i) THEN
             setDayImputation(tDayImputations(i),
                              --in/out -> fill result
-                             tStatusImpusResult);
+                             tStatusImpusResult,
+                             randomTime, randomEfective);
           END IF;
         END LOOP loopDays;
 
@@ -374,7 +471,8 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
             tDayimputation.TIMEEFECTIVE := tModelDays(indexDayModel).TIMEEFECTIVE;
             setDayImputation(tDayimputation,
                              --in/out -> fill result
-                             tStatusImpusResult);
+                             tStatusImpusResult,
+                             randomTime, randomEfective);
           END IF;
           dateActually := dateActually + 1;
         END LOOP loopRange;
@@ -395,16 +493,20 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
    * @param startDate Optional, if you imputation is for model day. Start date
    * @param endDate Optional, if you imputation is for model day. End date
    * @param tModelDays Optional, if you imputation is for model day. 5 model days -> mondays-fridays
+   * @param randomTime Add random in start time, end time -> 5 minutes before or after
+   * @param randomEfective Add random in efective time -> 5 minutes before
    */
   PROCEDURE setImputationsWrapper(
                       tDayImputations IMPUTADOR.T_DAYIMPUTATIONS := NULL,
                       startDate DATE := NULL,
                       endDate DATE := NULL,
-                      tModelDays IMPUTADOR.T_MODELDAYS := NULL) IS
+                      tModelDays IMPUTADOR.T_MODELDAYS := NULL,
+                      randomTime BOOLEAN := FALSE,
+                      randomEfective BOOLEAN := FALSE) IS
     tStatusImpusResult T_STATUSIMPUS;
   BEGIN  --setImputationsWrapper
     tStatusImpusResult := setImputations(
-                          tDayImputations, startDate, endDate, tModelDays);
+                          tDayImputations, startDate, endDate, tModelDays, randomTime, randomEfective);
     <<loopResulSet>>
     FOR i IN NVL(tStatusImpusResult.FIRST, 0)..NVL(tStatusImpusResult.LAST, -1) LOOP
       dbms_output.put_line('Día ' || TO_CHAR(tStatusImpusResult(i).DATEIM,'DD/MM/YYYY') || ' -> ' ||

@@ -66,13 +66,17 @@ CREATE OR REPLACE PACKAGE IMPUTADOR AS
    * @param startDate Optional, if you imputation is for model day. Start date
    * @param endDate Optional, if you imputation is for model day. End date
    * @param tModelDays Optional, if you imputation is for model day. 5 model days -> mondays-fridays
+   * @param randomTime Add random in start time, end time -> 5 minutes before or after
+   * @param randomEfective Add random in efective time -> 15 minutes minus
    * @return Type all set imputations done
    */
   FUNCTION setImputations(
                       tDayImputations IMPUTADOR.T_DAYIMPUTATIONS := NULL,
                       startDate DATE := NULL,
                       endDate DATE := NULL,
-                      tModelDays IMPUTADOR.T_MODELDAYS := NULL)
+                      tModelDays IMPUTADOR.T_MODELDAYS := NULL,
+                      randomTime BOOLEAN := FALSE,
+                      randomEfective BOOLEAN := FALSE)
   RETURN T_STATUSIMPUS;
 
 
@@ -83,12 +87,16 @@ CREATE OR REPLACE PACKAGE IMPUTADOR AS
    * @param startDate Optional, if you imputation is for model day. Start date
    * @param endDate Optional, if you imputation is for model day. End date
    * @param tModelDays Optional, if you imputation is for model day. 5 model days -> mondays-fridays
+   * @param randomTime Add random in start time, end time -> 5 minutes before or after
+   * @param randomEfective Add random in efective time -> 5 minutes before
    */
   PROCEDURE setImputationsWrapper(
                       tDayImputations IMPUTADOR.T_DAYIMPUTATIONS := NULL,
                       startDate DATE := NULL,
                       endDate DATE := NULL,
-                      tModelDays IMPUTADOR.T_MODELDAYS := NULL);
+                      tModelDays IMPUTADOR.T_MODELDAYS := NULL,
+                      randomTime BOOLEAN := FALSE,
+                      randomEfective BOOLEAN := FALSE);
 
 
 END IMPUTADOR;
