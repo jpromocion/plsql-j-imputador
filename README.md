@@ -236,3 +236,16 @@ end;
 NOTA: reemplazar "hr" por el esquema donde se haya creado
 
 !!!CUIDADO!!!: El entorno es producción, la prueba intentará imputar en el día actual.
+
+
+## Documentación adicional
+Se genera documentación del fuente con PlDoc (http://pldoc.sourceforge.net/maven-site/). La documentación auto-generada se localiza en "pldoc".
+
+Ejecución de la generación:
+```
+#Windows
+call pldoc.bat -doctitle 'plsql-j-imputador' -d pldoc -inputencoding ISO-8859-15 src/*.*
+
+#Linux:
+pldoc.sh -doctitle \"plsql-j-imputador\" -d pldoc -inputencoding ISO-8859-15 src/*.*
+```
