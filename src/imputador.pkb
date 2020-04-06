@@ -56,8 +56,10 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
     req utl_http.req;
     res utl_http.resp;
     l_text CLOB;
+
+    jsonResponse JSON_OBJECT_T;
   BEGIN
-    --dbms_output.put_line('URL-> ' || url);
+--dbms_output.put_line('URL-> ' || url);
 
     utl_http.set_wallet('file:' || getConfiguration('WALLE'), getConfiguration('WALPS'));
 
@@ -67,11 +69,13 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
       FOR i IN thttpHeader.FIRST..thttpHeader.LAST LOOP
         IF thttpHeader.EXISTS(i) THEN
           utl_http.set_header(req, thttpHeader(i).HEADER, thttpHeader(i).VALUE);
-          --dbms_output.put_line('Cabecera-> ' || thttpHeader(i).HEADER || ': ' || thttpHeader(i).VALUE);
+--dbms_output.put_line('Cabecera-> ' || thttpHeader(i).HEADER || ': ' || thttpHeader(i).VALUE);
         END IF;
       END LOOP;
     END IF;
 
+
+--dbms_output.put_line('content-> ' ||content);
     IF optionhttp = 'POST' THEN
       --always content-length
       utl_http.set_header(req, 'Content-Length', length(content));
@@ -81,8 +85,8 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
 
     res := utl_http.get_response(req);
 
+--dbms_output.put_line('Respuesta: ' || res.status_code);
     if (res.status_code = UTL_HTTP.HTTP_OK) then
-
       Dbms_Lob.CreateTemporary( l_text, TRUE, Dbms_Lob.SESSION );
       -- loop through the data coming back
       <<loopData>>
@@ -100,6 +104,22 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
 
     else
       dbms_output.put_line('[ERROR]: Received non-OK response: '||res.status_code||' '||res.reason_phrase);
+      --si tego un json de respuesta, lo voy a cargar... se supone que desde el invocador tratar el error de respuesta
+      Dbms_Lob.CreateTemporary( l_text, TRUE, Dbms_Lob.SESSION );
+      -- loop through the data coming back
+      <<loopData>>
+      DECLARE
+        value VARCHAR2(32767);
+      BEGIN
+        LOOP
+          UTL_HTTP.READ_TEXT(res, value, 32000);
+          Dbms_Lob.Append(l_text, value);
+        END LOOP;
+      EXCEPTION
+        WHEN UTL_HTTP.END_OF_BODY THEN
+          NULL;
+      END loopData;
+
     end if;
 
     utl_http.end_response(res);
