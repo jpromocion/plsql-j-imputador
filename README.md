@@ -1,7 +1,7 @@
 # Imputador
 Imputador de horas en api fuifi en plsql
 
- * v1.3: Solventa la problemática ante la modificación de fuifi para impedir la imputación sino se ha visitado la web/app para recibir los 10 puntos de recompensa. NOTA: lleva nuevo parámetro en el database.sql
+ * v1.3: Solventa la problemática ante la modificación de fuifi para impedir la imputación sino se ha visitado la web/app para recibir los 10 puntos de recompensa. NOTA: lleva nuevo parámetro en el database.sql.
 
 ## Requisitos
 
