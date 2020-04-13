@@ -18,3 +18,4 @@ insert into CONFIGURATION(configuration, value) values('PASS','&&pass');
 insert into CONFIGURATION(configuration, value) values('DOMA','&&domain');
 insert into CONFIGURATION(configuration, value) values('WALLE','/opt/oracle/admin/ORCLCDB/wallet');
 insert into CONFIGURATION(configuration, value) values('WALPS','WalletPasswd123');
+insert into CONFIGURATION(configuration, value) values('URLPO','api/v1/user/firstLoginToday');

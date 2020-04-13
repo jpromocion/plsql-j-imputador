@@ -127,6 +127,56 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
     RETURN l_text;
   END attackUrl;
 
+  /**
+   * Visit fuifi url web, for win points.... It is new for I can do imputation
+   * @param tToken Token de autenticacion
+   */
+  PROCEDURE visitPoints(tToken T_TOKEN) IS
+
+    urlBase_ CONFIGURATION.VALUE%TYPE;
+    urlPoints_ CONFIGURATION.VALUE%TYPE;
+    htmlResponse CLOB;
+    thttpHeader T_HTTP_HEADER := T_HTTP_HEADER();
+    --thttpHeader2 T_HTTP_HEADER := T_HTTP_HEADER();
+  BEGIN --visitPoints
+
+    urlBase_ := getConfiguration('URLBA');
+    urlPoints_ := getConfiguration('URLPO');
+
+    thttpHeader.EXTEND(2);
+    thttpHeader(1).HEADER := 'User-Agent';
+    thttpHeader(1).VALUE := 'Mozilla/4.0';
+    thttpHeader(2).HEADER := 'Authorization';
+    thttpHeader(2).VALUE := tToken.TOKENTYPE || ' ' || tToken.TOKEN;
+
+    --https://web.fuifi.com/#/tabs/inicio/home
+    --Check api url for firt Login today
+    htmlResponse := attackUrl(urlBase_ || urlPoints_, thttpHeader,
+                            '',
+                            optionhttp => 'GET');
+    IF NVL(dbms_lob.getlength(htmlResponse), 0) > 0 THEN
+      --dbms_output.put_line(SUBSTR(htmlResponse,1,400));
+      NULL;
+
+      --ADD (i think it is not necessary): visit puntos_hoy_es.json web url
+      --for the moment.... it is not necessary
+      -- htmlResponse := attackUrl('https://web.fuifi.com/assets/lottie/puntos_hoy_es.json', thttpHeader,
+      --                         '',
+      --                         optionhttp => 'GET');
+      --
+      -- IF NVL(dbms_lob.getlength(htmlResponse), 0) > 0 THEN
+      --   dbms_output.put_line(SUBSTR(htmlResponse,1,400));
+      --   NULL;
+      --
+      -- ELSE
+      --   dbms_output.put_line('[ERROR]: Web fuifi puntos_hoy_es KO');
+      -- END IF;
+
+    ELSE
+      dbms_output.put_line('[ERROR]: Web fuifi firstLoginToday KO');
+    END IF;
+
+  END visitPoints;
 
   /**
    * Get a token for api comunications
@@ -162,6 +212,11 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
       jsonResponse := JSON_OBJECT_T(htmlResponse);
       tToken.TOKENTYPE := jsonResponse.get_string('token_type');
       tToken.TOKEN := jsonResponse.get_string('access_token');
+--dbms_output.put_line('getTokenAuthorization -> token: '||tToken.TOKENTYPE || ' ' ||tToken.TOKEN);
+
+      --now... it is necesary to visti web fuifi for to win 10 points
+      visitPoints(tToken);
+
     END IF;
 
     RETURN tToken;
@@ -369,6 +424,8 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
 
     IF NVL(dbms_lob.getlength(htmlResponse), 0) > 0 THEN
 
+      --dbms_output.put_line(SUBSTR('getImputations -> htmlResponse: '||htmlResponse,1,500));
+
       jsonResponse := JSON_OBJECT_T(htmlResponse);
       arrayDataJSON := jsonResponse.get_array('data');
       <<dataLoop>>
@@ -384,6 +441,11 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
             tListDates.STARTTIME := TO_DATE(fechaCad || ' ' || dateJSON.get_string('date_start'),'YYYY-MM-DD HH24:MI:SS');
             tListDates.ENDTIME := TO_DATE(fechaCad || ' ' || dateJSON.get_string('date_end'),'YYYY-MM-DD HH24:MI:SS');
             tListDates.TIMEEFECTIVE := TO_DATE(fechaCad || ' ' || dateJSON.get_string('effective_time'),'YYYY-MM-DD HH24:MI:SS');
+
+            --las horas las devuelve en hora estandar sin aplicar el offset del time zone...
+            --a si que se lo aplicamos nosotros al de españa
+            tListDates.STARTTIME := from_tz(CAST(tListDates.STARTTIME as TIMESTAMP), 'GMT') at time zone 'Europe/Madrid';
+            tListDates.ENDTIME := from_tz(CAST(tListDates.ENDTIME as TIMESTAMP), 'GMT') at time zone 'Europe/Madrid';
 
             tListDatesResult(indexResult) := tListDates;
             indexResult := indexResult + 1;
@@ -414,7 +476,7 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
     tListDatesResult T_LISTDATES;
   BEGIN --getImputationsWrapper
     tListDatesResult := getImputations(lastImputations);
-    dbms_output.put_line('Últimas ' || lastImputations || ' imputaciones');
+    dbms_output.put_line('Ultimas ' || lastImputations || ' imputaciones');
     dbms_output.put_line('----------------------------------------------');
     dbms_output.put_line('Fecha       Inicio   Fin      Tiempo Efec.');
     dbms_output.put_line('----------  -------  -------  ------------');
@@ -529,7 +591,7 @@ CREATE OR REPLACE PACKAGE BODY IMPUTADOR AS
                           tDayImputations, startDate, endDate, tModelDays, randomTime, randomEfective);
     <<loopResulSet>>
     FOR i IN NVL(tStatusImpusResult.FIRST, 0)..NVL(tStatusImpusResult.LAST, -1) LOOP
-      dbms_output.put_line('Día ' || TO_CHAR(tStatusImpusResult(i).DATEIM,'DD/MM/YYYY') || ' -> ' ||
+      dbms_output.put_line('Dia ' || TO_CHAR(tStatusImpusResult(i).DATEIM,'DD/MM/YYYY') || ' -> ' ||
                 tStatusImpusResult(i).STATUS || ' - ' ||
                 tStatusImpusResult(i).STATUSCODE || ' - '||
                 tStatusImpusResult(i).MESSAGE);
