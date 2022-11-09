@@ -4,6 +4,8 @@ Imputador de horas en api fuifi en plsql
  * v1.3: Solventa la problemática ante la modificación de fuifi para impedir la imputación sino se ha visitado la web/app para recibir los 10 puntos de recompensa. NOTA: lleva nuevo parámetro en el database.sql.
  * v1.4: Actualización cambio de dominio a laberitapp.com. Ahora la app esta en "https://laberitapp.com/" y se revisa el dominio principal de la API de invocaciones.
 
+NOTA: Se ha creado una capa gráfica por encima para facilizar su uso con Oracle APEX. Ver el repositorio [apex-j-imputador](https://github.com/jpromocion/apex-j-imputador)
+
 ## Requisitos
 
 Se requiere al menos una Oracle 12c, dado que hace uso de las funcionalidades añadidas para extracción de JSON.
