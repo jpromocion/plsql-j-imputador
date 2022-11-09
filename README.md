@@ -249,7 +249,7 @@ NOTA: reemplazar "hr" por el esquema donde se haya creado
 
 
 ## Documentación adicional
-Se genera documentación del fuente con PlDoc (http://pldoc.sourceforge.net/maven-site/). La documentación auto-generada se localiza en "pldoc".
+Se puede generar documentación del fuente con PlDoc (http://pldoc.sourceforge.net/maven-site/).
 
 Ejecución de la generación:
 ```
