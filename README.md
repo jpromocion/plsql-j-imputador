@@ -1,17 +1,22 @@
 # Imputador
+![License: GPL 3.0](https://img.shields.io/badge/License-%20GPL%203.0-green.svg)
+![Oracle PLSQL](https://img.shields.io/badge/Oracle%20PLSQL-12c%2B-orange)
+[![Dona PayPal](https://img.shields.io/badge/Dona-PayPal-blue.svg)](https://www.paypal.com/donate/?hosted_button_id=S2CX67ZD5C97C)
+
+
 Imputador de horas en api fuifi en plsql
 
- * v1.3: Solventa la problem·tica ante la modificaciÛn de fuifi para impedir la imputaciÛn sino se ha visitado la web/app para recibir los 10 puntos de recompensa. NOTA: lleva nuevo par·metro en el database.sql.
- * v1.4: ActualizaciÛn cambio de dominio a laberitapp.com. Ahora la app esta en "https://laberitapp.com/" y se revisa el dominio principal de la API de invocaciones.
+ * v1.3: Solventa la problem√°tica ante la modificaci√≥n de fuifi para impedir la imputaci√≥n sino se ha visitado la web/app para recibir los 10 puntos de recompensa. NOTA: lleva nuevo par√°metro en el database.sql.
+ * v1.4: Actualizaci√≥n cambio de dominio a laberitapp.com. Ahora la app esta en "https://laberitapp.com/" y se revisa el dominio principal de la API de invocaciones.
 
-NOTA: Se ha creado una capa gr·fica por encima para facilizar su uso con Oracle APEX. Ver el repositorio [apex-j-imputador](https://github.com/jpromocion/apex-j-imputador)
+NOTA: Se ha creado una capa gr√°fica por encima para facilizar su uso con Oracle APEX. Ver el repositorio [apex-j-imputador](https://github.com/jpromocion/apex-j-imputador)
 
 ## Requisitos
 
-Se requiere al menos una Oracle 12c, dado que hace uso de las funcionalidades aÒadidas para extracciÛn de JSON.
+Se requiere al menos una Oracle 12c, dado que hace uso de las funcionalidades a√±adidas para extracci√≥n de JSON.
 
 NOTA: Testeado en una Oracle 18c (18.3.0 Enterprise Edition) instalada por Docker oficial de Oracle https://github.com/oracle/docker-images/tree/master/OracleDatabase/SingleInstance
-NOTA: TambiÈn se prueba con una Oracle Autonomus Database de Oracle Cloud.
+NOTA: Tambi√©n se prueba con una Oracle Autonomus Database de Oracle Cloud.
 
 ## Installation
 
@@ -72,30 +77,30 @@ Para crear los componentes necesarios en nuestro esquema creado (en el ejemplo "
 @src/imputador.pkb
 ```
 
-Durante su ejecuciÛn se pediran 3 par·metros a rellenar:
+Durante su ejecuci√≥n se pediran 3 par√°metros a rellenar:
  * user: Tu usuario de la API fuifi
  * pass: Tu password de la API fuifi
- * domain: La organizaciÛn de la API fuifi. Posteriormente la organizaciÛn ha sido ocultado, pero la siguen gestionando, solo que ahora el valor es fijo a "laberit".
+ * domain: La organizaci√≥n de la API fuifi. Posteriormente la organizaci√≥n ha sido ocultado, pero la siguen gestionando, solo que ahora el valor es fijo a "laberit".
 
 
 **IMPORTANTE: El siguiente paso para wallet se ha detectado innecesario si se utiliza una Oracle Autonomus Database de Oracle Cloud.**
-Dado que la API REST de fuifi va por https, es necesario configurar un wallet de certificados en el servidor de la BBDD, e incluir en el el contenedor el certificado raÌz importado de la url https://api.fuifi.com/. Por ejempo, sobre la bbdd testeada del Docker 18c (Siendo USERTrustRSACertificationAuthority.crt donde se importo el certificado raiz):
+Dado que la API REST de fuifi va por https, es necesario configurar un wallet de certificados en el servidor de la BBDD, e incluir en el el contenedor el certificado ra√≠z importado de la url https://api.fuifi.com/. Por ejempo, sobre la bbdd testeada del Docker 18c (Siendo USERTrustRSACertificationAuthority.crt donde se importo el certificado raiz):
 ```
 mkdir -p /opt/oracle/admin/ORCLCDB/wallet
 orapki wallet create -wallet /opt/oracle/admin/ORCLCDB/wallet -pwd WalletPasswd123 -auto_login
 orapki wallet add -wallet /opt/oracle/admin/ORCLCDB/wallet -cert /tmp/USERTrustRSACertificationAuthority.crt -trusted_cert -pwd WalletPasswd123
 ```
-NOTA: mas informaciÛn al respecto en https://oracle-base.com/articles/misc/utl_http-and-ssl y https://apex.oracle.com/pls/apex/germancommunities/apexcommunity/tipp/6121/index-en.html.
+NOTA: mas informaci√≥n al respecto en https://oracle-base.com/articles/misc/utl_http-and-ssl y https://apex.oracle.com/pls/apex/germancommunities/apexcommunity/tipp/6121/index-en.html.
 
-Si se utiliza una ruta de contenedor de certificado y un password distinto, el mismo debe ser actualizado en la tabla creada en los scripts de inicializaciÛn de nuestro esquema "CONFIGURATION":
-  * El par·metro "WALLE" contiene la ruta de localizaciÛn del contenedor de certificados. Defecto es "/opt/oracle/admin/ORCLCDB/wallet".
-  * El par·metro "WALPS" contiene la contraseÒa de acceso al contenedor de certificados. Defecto es "WalletPasswd123".
+Si se utiliza una ruta de contenedor de certificado y un password distinto, el mismo debe ser actualizado en la tabla creada en los scripts de inicializaci√≥n de nuestro esquema "CONFIGURATION":
+  * El par√°metro "WALLE" contiene la ruta de localizaci√≥n del contenedor de certificados. Defecto es "/opt/oracle/admin/ORCLCDB/wallet".
+  * El par√°metro "WALPS" contiene la contrase√±a de acceso al contenedor de certificados. Defecto es "WalletPasswd123".
 
 
 
-## UtilizaciÛn:
+## Utilizaci√≥n:
 
-Consultar las imputaciones de los ˙ltimos N dÌas (el valor por defecto de N es 15):
+Consultar las imputaciones de los √∫ltimos N d√≠as (el valor por defecto de N es 15):
 ``` sql
 --Ultimos 15 dias
 set serveroutput on
@@ -116,7 +121,7 @@ end;
 
 Ejemplo de salida:
 ```
-⁄ltimas 5 imputaciones
+√öltimas 5 imputaciones
 ----------------------------------------------
 Fecha       Inicio   Fin      Tiempo Efec.
 ----------  -------  -------  ------------
@@ -127,7 +132,7 @@ Fecha       Inicio   Fin      Tiempo Efec.
 13/11/2019  07:03    20:03    12:00
 ```
 
-Para realizar una imputaciÛn existen dos mecanismos
+Para realizar una imputaci√≥n existen dos mecanismos
   * Especificar un conjunto de dias con sus imputaciones concretas:
 
   ``` sql
@@ -158,7 +163,7 @@ Para realizar una imputaciÛn existen dos mecanismos
   /
   ```
 
-  * Especificar un rango de fechas, y un conjunto de dÌas modelo para los 5 dias laborales, imputandose en todo el periodo indicado, haciendo uso de la imputaciÛn del dÌa modelo de semana:
+  * Especificar un rango de fechas, y un conjunto de d√≠as modelo para los 5 dias laborales, imputandose en todo el periodo indicado, haciendo uso de la imputaci√≥n del d√≠a modelo de semana:
 
   ``` sql
   set serveroutput on
@@ -197,16 +202,16 @@ Para realizar una imputaciÛn existen dos mecanismos
 
 Ejemplo de salida con 1 dia imputado:
 ```
-DÌa 20/11/2019 -> success - 200 - Saved
+D√≠a 20/11/2019 -> success - 200 - Saved
 ```
 
-Ejemplo de rechazo de una imputaciÛn (por ejemplo, si el dÌa ya est· imputado):
+Ejemplo de rechazo de una imputaci√≥n (por ejemplo, si el d√≠a ya est√° imputado):
 ```
 [ERROR]: Received non-OK response: 400 Bad Request
 ```
 
-Adicionalmente se aÒaden los parametros de invocaciÛn del imputador "randomTime" y "randomEfective" (por defecto no activados):
-  * "randomTime": Sobre la hora de entrada y salida, aÒade/decrementa aleatoriamente un valor de entre 1 a 5 minutos (aportar realismo). NOTA: En caso de provocarse un incremento del tiempo real sobre el efectivo rellenado, se corrige autom·ticamente el efectivo para evitar descuadrar.
+Adicionalmente se a√±aden los parametros de invocaci√≥n del imputador "randomTime" y "randomEfective" (por defecto no activados):
+  * "randomTime": Sobre la hora de entrada y salida, a√±ade/decrementa aleatoriamente un valor de entre 1 a 5 minutos (aportar realismo). NOTA: En caso de provocarse un incremento del tiempo real sobre el efectivo rellenado, se corrige autom√°ticamente el efectivo para evitar descuadrar.
   * "randomEfective": Adicionalmente, sobre el tiempo efectivo a imputar, decrementa un valor aleatorio de entre 1-15 minutos (aportar realismo).
 Ejemplo:
 ``` sql
@@ -230,7 +235,7 @@ end;
 ```
 
 
-NOTA: ⁄sese bajo responsabilidad personal.
+NOTA: √ösese bajo responsabilidad personal.
 
 
 ## Unit test
@@ -245,13 +250,13 @@ end;
 ```
 NOTA: reemplazar "hr" por el esquema donde se haya creado
 
-!!!CUIDADO!!!: El entorno es producciÛn, la prueba intentar· imputar en el dÌa actual.
+!!!CUIDADO!!!: El entorno es producci√≥n, la prueba intentar√° imputar en el d√≠a actual.
 
 
-## DocumentaciÛn adicional
-Se puede generar documentaciÛn del fuente con PlDoc (http://pldoc.sourceforge.net/maven-site/).
+## Documentaci√≥n adicional
+Se puede generar documentaci√≥n del fuente con PlDoc (http://pldoc.sourceforge.net/maven-site/).
 
-EjecuciÛn de la generaciÛn:
+Ejecuci√≥n de la generaci√≥n:
 ```
 #Windows
 call pldoc.bat -doctitle 'plsql-j-imputador' -d pldoc -inputencoding ISO-8859-15 src/*.*
